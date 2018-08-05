@@ -1,0 +1,106 @@
+<form class="layui-form">
+    <div class="layui-form-item">
+        <label class="layui-form-label">菜单名称</label>
+        <div class="layui-input-block"  style="padding-right: 16px">
+            <input type="text" name="menu_name" id='menu_name'placeholder="请输入菜单名称" value="{if $info != ''}{$info['menu_name']}{/if}" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">菜单图标</label>
+        <input type="hidden" name="m_icon" value="">
+        <div class="layui-input-block chicon"   style="padding-right: 16px">
+            {if $info != ''}
+                {if $info['fa'] == 1}
+                    <i class="fa {$info['icon']}" aria-hidden="true" data-icon="fa-{$info['icon']}" style="font-size: 30px;"></i>
+                {else}
+                    <i class="layui-icon" data-icon="{$info['icon']}" style="font-size: 30px;">{$info['icon']}</i>
+                {/if}
+            {else}
+            <input type="text"value="无" class="layui-input">
+            {/if}
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">点击选择图标</label>
+        <div class="layui-input-block">
+            <i class="layui-icon iconch" data-icon="&#xe608;" style="font-size: 30px; color: #1E9FFF;cursor:pointer;">&#xe608;</i>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">排序号</label>
+        <div class="layui-input-block"   style="padding-right: 16px">
+            <input type="text" name="sortid"  id='sortid'  placeholder="请输入排序号 (不大于255)" value="{if $info != ''}{$info['sortid']}{/if}" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+</form>
+
+
+<script>
+    layui.config({
+        base: '/static/admin/plugins/layui/modules/'
+    });
+
+    layui.use(['form','layer'], function() {
+        var form = layui.form();
+        var $ = layui.jquery,
+                layer = parent.layer === undefined ? layui.layer : parent.layer;
+
+
+        if($("input[name='menu_name']").val() != ""){
+            $("input[name='m_icon']").val("{if $info != ''}{$info['icon']}{/if}");
+        }
+
+        $('.iconch').on('click', function() {
+            $.get('/menu/icon', null, function(form) {
+                layer.open({
+                    type: 1,
+                    title: "选择菜单图标",
+                    content: form,
+                    btn: ['提交','取消'],
+                    area: ['600px', '400px'],
+                    maxmin: true,
+                    yes: function(index, layero){
+                        //按钮【按钮一】的回调
+                        var icon = layero.find(".layui-form")[0].icon.value;
+
+                        if(icon != ''){
+                            ulHtml = '';
+                            if(icon !== undefined && icon !== '') {
+                                if(icon.indexOf('fa-') !== -1) {
+                                    ulHtml += '<i class="fa ' + icon + '" aria-hidden="true" data-icon="' + icon + '" style="font-size: 30px;"></i>';
+                                } else if(icon.indexOf('&') !== -1) {
+                                    ulHtml += '<i class="layui-icon" data-icon="' + icon + '" style="font-size: 30px;">' + icon + '</i>';
+                                }else {
+                                    icon = "&"+icon+";";
+                                    ulHtml += '<i class="layui-icon" data-icon="' + icon + '" style="font-size: 30px;">' + icon + '</i>';
+                                }
+                            }
+
+                            $(".chicon").empty();
+                            $(".chicon").append(ulHtml);
+
+                            $("input[name='m_icon']").val(icon);
+                        }
+
+                        layer.close(layer.index);
+
+                    },
+                    btn2: function(index, layero){
+                        layer.close(layer.index);
+                    },
+                    full: function(elem) {
+                        var win = window.top === window.self ? window : parent.window;
+                        $(win).on('resize', function() {
+                            var $this = $(this);
+                            elem.width($this.width()).height($this.height()).css({
+                                top: 0,
+                                left: 0
+                            });
+                            elem.children('div.layui-layer-content').height($this.height() - 95);
+                        });
+                    }
+                });
+            });
+        });
+    });
+</script>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {include file="Public/Header" /}
+</head>
+
+<body>
+<div class="admin-main">
+    <blockquote class="layui-elem-quote">
+        <a href="/Group/editGroup" class="layui-btn layui-btn" id="add">
+            <i class="layui-icon" >&#xe608;</i> 添加小组
+        </a>
+    </blockquote>
+    <fieldset class="layui-elem-field layui-field-title">
+        <legend>小组列表</legend>
+        <div class="layui-field-box">
+            <table class="site-table table-hover">
+                <thead>
+                <tr>
+                    <th>小组编号</th>
+                    <th>小组名称</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                 {foreach $info as $k=>$v}
+                <tr>
+                    <td>{$v['group_id']}</td>
+                    <td>{$v['group_name']}</td>
+                    <td>
+                        <a href="/Group/editGroup?group_id={$v['group_id']}"  class="layui-btn layui-btn-mini edit">编辑</a>
+                    </td>
+                </tr>
+                {/foreach}
+                </tbody>
+            </table>
+
+        </div>
+    </fieldset>
+    <div class="admin-table-page">
+        <div id="page" class="page pager">
+        </div>
+    </div>
+</div>
+<script>
+    layui.config({
+        base: '/static/admin/plugins/layui/modules/'
+    });
+    layui.use(['icheck','laypage','layer'], function() {
+        var $ = layui.jquery,
+                laypage = layui.laypage,
+                layer = parent.layer === undefined ? layui.layer : parent.layer;
+        $('input').iCheck({
+            checkboxClass: 'icheckbox_flat-green'
+        });
+        
+        //page
+        laypage({
+            cont: 'page',
+            pages: {$pagetotal},  //总页数
+            groups: 5 ,   		  //连续显示分页数
+            curr: {$page}
+            ,
+            jump: function(obj, first) {
+                //得到了当前页，用于向服务端请求对应数据
+                var curr = obj.curr;
+                if(!first) {
+                    //layer.msg('第 '+ obj.curr +' 页');
+                	window.location.href ="/group/index?page="+curr;
+                }
+            }
+        });
+
+        function tips(msg) {
+            layer.open({
+                title: '提示信息',
+                content: msg
+            });
+        }
+
+    });
+</script>
+</body>
+
+</html>

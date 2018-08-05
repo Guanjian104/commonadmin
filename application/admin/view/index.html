@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>大美科技后台管理</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+
+    <link rel="stylesheet" href="/static/admin/plugins/layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="/static/admin/css/global.css" media="all">
+    <link rel="stylesheet" href="/static/admin/plugins/font-awesome/css/font-awesome.min.css">
+</head>
+
+<body>
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header header header-demo">
+        <div class="layui-main">
+            <div class="admin-login-box">
+                <a class="logo" style="left: 0;" href="http://www.idmei.com" target="_blank">
+                    <span style="font-size: 22px;color:#fff;font-family: 'Microsoft YaHei UI Light';">大美科技  IDMEI</span>
+                </a>
+            </div>
+            <ul class="layui-nav admin-header-item">
+                <li class="layui-nav-item">
+                    <a href="javascript:;">大美科技管理系统欢迎您！</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;" class="admin-header-user">
+                        <img src="/static/admin/images/logo.png" />
+                        <span>{$Think.session.userInfo.name}</span>
+                    </a>
+                    <dl class="layui-nav-child">
+                        <dd>
+                            <a href="javascript:;" class="myinfo" ><i class="fa fa-user-circle" aria-hidden="true"></i> 个人信息</a>
+                        </dd>
+                        <dd>
+                            <a href="javascript:;" class="pwd" ><i class="fa fa-user-circle" aria-hidden="true"></i> 修改密码</a>
+                        </dd>
+                        <dd id="lock">
+                            <a href="javascript:;">
+                                <i class="fa fa-lock" aria-hidden="true" ></i> 锁屏 (Alt+L)
+                            </a>
+                        </dd>
+                        <dd>
+                            <a href="/Login/clearLogin"><i class="fa fa-sign-out" aria-hidden="true"></i> 注销</a>
+                        </dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="layui-side layui-bg-black" id="admin-side">
+        <div class="layui-side-scroll" id="admin-navbar-side" lay-filter="side"></div>
+    </div>
+    <div class="layui-body" style="bottom: 0;" id="admin-body">
+        <div class="layui-tab admin-nav-card layui-tab-brief" lay-filter="admin-tab">
+            <div class="layui-tab-content" style="min-height: 150px; padding: 5px 0 0 0;">
+                <div class="layui-tab-item layui-show">
+                    <iframe src="/index/main" style="height: 807px;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-footer footer footer-demo" id="admin-footer">
+        <div class="layui-main">
+            <p>2017 &copy;
+                <a href="http://www.idmei.com/" target="_blank">DaMei</a>
+            </p>
+        </div>
+    </div>
+    <div class="site-tree-mobile layui-hide">
+        <i class="layui-icon">&#xe602;</i>
+    </div>
+    <div class="site-mobile-shade"></div>
+
+    <!--锁屏模板 start-->
+    <script type="text/template" id="lock-temp">
+        <div class="admin-header-lock" id="lock-box">
+            <div class="admin-header-lock-img">
+                <img src="/static/admin/images/logo.png"/>
+            </div>
+            <div class="admin-header-lock-name">{$Think.session.userInfo.name}</div>
+            <div class="admin-header-lock-name" id="lockUserName" style="display: none">{$Think.session.userInfo.username}</div>
+            <input type="text" class="admin-header-lock-input" value="输入登录密码解锁.." name="lockPwd" id="lockPwd" />
+            <button class="layui-btn layui-btn-small" id="unlock">解锁</button>
+        </div>
+    </script>
+    <!--锁屏模板 end -->
+    <script type="text/javascript" src="/static/admin/plugins/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery1.42.min.js"></script>
+    <script>
+        var navs = {$data};
+        $.parseJSON(navs);
+    </script>
+    <script src="/static/admin/js/index.js"></script>
+    <script>
+        layui.use('layer', function() {
+            var $ = layui.jquery,
+                layer = layui.layer;
+			
+            //个人信息
+            $('.myinfo').on('click', function() {
+            
+            	var user_id = {$Think.session.userInfo.user_id};
+            	
+                $.get('/user/myinfo?user_id='+user_id, null, function(form) {
+                    layer.open({
+                        type: 1,
+                        title:' 个 人 信 息 ',
+                        content: form,
+                        btn: [ '确定'],
+                        area: ['400px', '350px'],
+                        maxmin: true,
+                        yes: function(index, layero){
+                        	layer.close(layer.index);
+                      	}
+                    });
+                });
+            });
+
+            //修改密码
+            $('.pwd').on('click', function() {
+
+                var user_id = {$Think.session.userInfo.user_id};
+
+                $.get('/user/pwd', null, function(form) {
+                    layer.open({
+                        type: 1,
+                        title:'修改密码 ',
+                        content: form,
+                        btn: ['提交','取消'],
+                        area: ['400px', '350px'],
+                        maxmin: true,
+                        yes: function(index, layero){
+                            //按钮【按钮一】的回调
+                            var o_pwd = layero.find("input[name='o_pwd']").val();
+                            var n_pwd = layero.find("input[name='n_pwd']").val();
+                            var r_pwd = layero.find("input[name='r_pwd']").val();
+
+                            if(o_pwd == '')
+                            {
+                                tips('请输入原密码');return false;
+                            }
+                            if(n_pwd == '')
+                            {
+                                tips('请输入新密码');return false;
+                            }
+                            if(r_pwd == '')
+                            {
+                                tips('请输入重复密码');return false;
+                            }
+                            if(n_pwd != r_pwd)
+                            {
+                                tips('两次输入的密码不一致');return false;
+                            }
+
+                            $.ajax({
+                                type: "post",
+                                url: "/user/savePwd",
+                                data: {"user_id":user_id,"o_pwd":o_pwd,"n_pwd":n_pwd},
+                                dataType: 'json',
+                                success: function(data){
+                                    if(data.status == true){
+                                        layer.open({
+                                            title: '提示信息',
+                                            content: '修改成功',
+                                            btn: ['确定'],
+                                            yes: function(){
+                                                layer.closeAll();
+                                            }
+                                        });
+                                    }else if(data.status == false) {
+                                        tips(data.msg);return false;
+                                    }
+                                },
+                                error : function (q,w,e) {
+                                    tips(e); return false;
+                                }
+                            })
+
+                        },
+                        btn2: function(index, layero){
+                            layer.close(layer.index);
+                        }
+                    });
+                });
+            });
+
+            function tips(msg) {
+                layer.open({
+                    title: '提示信息',
+                    content: msg
+                });
+            }
+        });
+    </script>
+</div>
+</body>
+
+</html>

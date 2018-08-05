@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {include file="Public/Header" /}
+</head>
+
+<body>
+<div class="admin-main">
+    <blockquote class="layui-elem-quote">
+        <form class="layui-form">
+
+            <div class="layui-input-inline">
+                <select id="k_group" name="group_id" lay-verify="">
+                    <option value="">所在组</option>
+                    <option value="0" {if $k_group_id===0}selected{/if}>全部</option>
+                    {foreach $group_info as $k=>$v}
+                        <option value="{$v.group_id}" {if $k_group_id==$v.group_id}selected{/if}>{$v.group_name}</option>
+                    {/foreach}
+                </select>
+            </div>
+            <div class="layui-input-inline">
+                <input type="text" name="k_username" placeholder="用户名..." value="{if $k_username}{$k_username}{/if}" class="layui-input">
+            </div>
+            <div class="layui-input-inline">
+                <input type="text" name="k_name" placeholder="真实姓名..." value="{if $k_name}{$k_name}{/if}" class="layui-input">
+            </div>
+            <div class="layui-input-inline">
+                <input type="text" name="k_mobile" placeholder="电话号码..." value="{if $k_mobile}{$k_mobile}{/if}" class="layui-input">
+            </div>
+            <a href="javascript:;" class="layui-btn" id="search">
+                <i class="layui-icon" >&#xe615;</i> 搜索
+            </a>
+            <a href="javascript:;" class="layui-btn layui-btn" id="add">
+                <i class="layui-icon" >&#xe608;</i> 添加成员
+            </a>
+
+        </form>
+    </blockquote>
+    <fieldset class="layui-elem-field layui-field-title">
+        <legend>成员列表</legend>
+        <div class="layui-field-box">
+            <table class="site-table table-hover">
+                <thead>
+                <tr>
+                    <th>所在组</th>
+                    <th>用户名</th>
+                    <th>真实姓名</th>
+                    <th>手机号码</th>
+                    <th>上次登录时间</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                 {foreach $info  as $k=>$v}
+                <tr>
+                    <td>{$v['group_name']}</td>
+                    <td>{$v['username']}</td>
+                    <td>{$v['name']}</td>
+                    <td>{$v['mobile']}</td>
+                    <td>{$v['logintime']|date="Y-m-d H:i:s",###}</td>
+                    <td>
+                        <a href="javascript:;"  class="layui-btn layui-btn-mini edit" data-user_id="{$v['user_id']}">编辑</a>
+                        <a href="javascript:;"  class="layui-btn layui-btn-danger layui-btn-mini del" data-user_id="{$v['user_id']}" >删除</a>
+                    </td>
+                </tr>
+                {/foreach}
+                </tbody>
+            </table>
+
+        </div>
+    </fieldset>
+    <div class="admin-table-page">
+        <div id="page" class="page pager">
+        </div>
+    </div>
+</div>
+<script>
+    
+    layui.use(['form','laypage','layer','jquery'], function() {
+        var $ = layui.jquery,laypage = layui.laypage,form = layui.form();
+        
+        //page
+        laypage({
+            cont: 'page',
+            pages: {$pagetotal},    //总页数
+            groups: 5,              //连续显示分页数
+            curr: {$page},
+            jump: function(obj, first) {
+                //得到了当前页，用于向服务端请求对应数据
+                var curr = obj.curr;
+                if(!first) {
+                    //layer.msg('第 '+ obj.curr +' 页');
+                	window.location.href ="/user/index?{$keyword}&page="+curr;
+                }
+            }
+        });
+        //绑定回车事件
+        $(function(){
+            document.onkeydown = function(e){
+                var ev = document.all ? window.event : e;
+                if(ev.keyCode==13) {
+                    $("#search").click();
+                }
+            }
+        });
+
+        //搜索按钮
+        $('#search').on('click', function() {
+        	k_group_id     = $("#k_group").val();
+	        k_username     = $("input[name='k_username']").val();
+	        k_name         = $("input[name='k_name']").val();
+	        k_mobile       = $("input[name='k_mobile']").val();
+	        
+	       	location.href  = "/User/index?k_group_id="+k_group_id+"&k_username="+k_username+"&k_name="+k_name+"&k_mobile="+k_mobile;
+        });
+        
+        $('#add').on('click', function() {
+            $.get('/User/tan', null, function(form) {
+                layer.open({
+                    type: 1,
+                    title: '添加成员',
+                    content: form,
+                    btn: [ '提交','清空','取消'],
+                    area: ['600px', '400px'],
+                    maxmin: true,
+                    yes: function(index, layero){
+                        //按钮【按钮一】的回调
+                    	var username    = layero.find(".layui-form")[0].username.value;
+                        var password    = layero.find(".layui-form")[0].password.value;
+                        var group_id    = layero.find(".layui-form")[0].group_id.value;
+                        var name        = layero.find(".layui-form")[0].name.value;
+                        var mobile      = layero.find(".layui-form")[0].mobile.value;
+                        
+                        if(username == "") {
+                            tips('用户名不得为空');return false;
+                        }
+                        if(password == "") {
+                            tips('登录密码不得为空');return false;
+                        }
+                        if(group_id == ''){
+                            tips('请输入成员所在组');return false;
+                        }
+                        if(name == ''){
+                            tips('请输入成员姓名');return false;
+                        }
+                        if(mobile == ''){
+                            tips('请输入成员手机号码');return false;
+                        }
+                        
+                        $.ajax({
+                            type: "post",
+                            url: "/user/saveUser",
+                            data: {"username":username,"password":password,"group_id":group_id,"name":name,"mobile":mobile},
+                            dataType: 'json',
+                            success: function(data){
+                                if(data.status == true){
+                                   // layer.close(layer.index);
+                                	layer.close(layer.index);
+                                    location.reload();
+                                }else if(data.status == false) {
+                                    tips(data.msg);
+                                }
+                            },
+                            error : function (q,w,e) {
+                                tips(e);
+                            }
+                        })
+                   	},
+                   	btn2: function(index,layero){
+                       layero.find(".layui-form")[0].username.value  = '';
+                       layero.find(".layui-form")[0].password.value  = '';
+                       layero.find(".layui-form")[0].group_id.value  = '';
+                       layero.find(".layui-form")[0].name.value      = '';
+                       layero.find(".layui-form")[0].mobile.value    = '';
+                       return false;
+                    },
+                    btn3: function(index, layero){
+                    	layer.close(layer.index);
+                  	},
+                    full: function(elem) {
+                        var win = window.top === window.self ? window : parent.window;
+                        $(win).on('resize', function() {
+                            var $this = $(this);
+                            elem.width($this.width()).height($this.height()).css({
+                                top: 0,
+                                left: 0
+                            });
+                            elem.children('div.layui-layer-content').height($this.height() - 95);
+                        });
+                    }
+                });
+            });
+        });
+
+        $('.edit').on('click', function() {
+            $.get('/User/tan?userid='+this.dataset.user_id, null, function(form) {
+                layer.open({
+                    type: 1,
+                    title: '修改成员信息',
+                    content: form,
+                    btn: [ '提交','清空','取消'],
+                    area: ['600px', '400px'],
+                    maxmin: true,
+                    yes: function(index, layero){
+                        //按钮【按钮一】的回调
+                        var user_id     = layero.find(".layui-form")[0].user_id.value;
+                    	var username    = layero.find(".layui-form")[0].username.value;
+                        var password    = layero.find(".layui-form")[0].password.value;
+                        var group_id    = layero.find(".layui-form")[0].group_id.value;
+                        var name        = layero.find(".layui-form")[0].name.value;
+                        var mobile      = layero.find(".layui-form")[0].mobile.value;
+                        
+                        if(username == "") {
+                            tips('用户名不得为空');return false;
+                        }
+                        if(group_id == ''){
+                            tips('请输入成员所在组');return false;
+                        }
+                        if(name == ''){
+                            tips('请输入成员姓名');return false;
+                        }
+                        if(mobile == ''){
+                            tips('请输入成员手机号码');return false;
+                        }
+                        
+                        $.ajax({
+                            type: "post",
+                            url: "/user/saveUser",
+                            data: {"user_id":user_id,"username":username,"password":password,"group_id":group_id,"name":name,"mobile":mobile},
+                            dataType: 'json',
+                            success: function(data){
+                                if(data.status == true){
+                                	layer.close(layer.index);
+                                    location.reload();
+                                }else if(data.status == false) {
+                                    tips(data.msg);
+                                }
+                            },
+                            error : function (q,w,e) {
+                                tips(e);
+                            }
+                        })
+                   	},
+                   	btn2: function(index,layero){
+                       layero.find(".layui-form")[0].username.value  = '';
+                       layero.find(".layui-form")[0].password.value  = '';
+                       layero.find(".layui-form")[0].group_id.value  = '';
+                       layero.find(".layui-form")[0].name.value      = '';
+                       layero.find(".layui-form")[0].mobile.value    = '';
+                       return false;
+                    },
+                    btn3: function(index, layero){
+                    	layer.close(layer.index);
+                  	},
+                    full: function(elem) {
+                        var win = window.top === window.self ? window : parent.window;
+                        $(win).on('resize', function() {
+                            var $this = $(this);
+                            elem.width($this.width()).height($this.height()).css({
+                                top: 0,
+                                left: 0
+                            });
+                            elem.children('div.layui-layer-content').height($this.height() - 95);
+                        });
+                    }
+                });
+            });
+        });
+
+        $('.del').on('click', function() {
+            layer.open({
+                title: '提示信息',
+                content: "你确定删除吗？<form class='layui-form'><input type='hidden' name='user_id' value='"+this.dataset.user_id+"'></form>",
+                btn: ['确定','取消'],
+                yes: function(index,layero){
+                    //按钮【按钮一】的回调
+                    $.ajax({
+                        type: "post",
+                        url: "/user/delUser",
+                        data:{"user_id":layero.find(".layui-form")[0].user_id.value},
+                        dataType: 'json',
+                        success: function(data){
+                            if(data.status == true){
+                                layer.close(layer.index);
+                                location.reload();
+                            }else if(data.status == false) {
+                                tips(data.msg);
+                            }
+                        }
+                    });
+                },
+                btn2: function(index, layero){
+                    layer.close(layer.index);
+                }
+            });
+        });
+        function tips(msg) {
+            layer.open({
+                title: '提示信息',
+                content: msg
+            });
+        }
+
+    });
+</script>
+</body>
+
+</html>

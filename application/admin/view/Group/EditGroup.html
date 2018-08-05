@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    {include file="Public/Header"/}
+</head>
+<form class="layui-form" >
+    <input type="hidden" name="group_id" value="{$info['group_id']}">
+    <div class="layui-form-item">
+        <label class="layui-form-label">小组名</label>
+        <div class="layui-input-block">
+            <input type="text" name="group_name" id='group_name' placeholder="请输入小组名" value="{$info['group_name']}" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">权限设置</label>
+        <div class="layui-input-block" pane>
+            {foreach $menuInfo as $k => $v}
+            <div class="layui-form-item">
+            <label class="layui-form-label">{$v.menu_name}</label>
+                <div class="layui-input-block" pane>
+            	{foreach $itemInfo as $key => $val}
+            		{if $val.menu_id == $v.menu_id}
+                    <div style="width: 180px;float: left;margin-right: 10px;">
+            		    <input type="checkbox" name="item_id[{$val.item_id}]" value="{$val.item_id}" title="{$val.item_name}" lay-skin="primary" {if in_array($val.item_id,$itemIds)}checked{/if} />
+                    </div>
+            		{/if}
+            	{/foreach}
+                </div>
+            </div>
+            {/foreach}
+        </div>
+    </div>
+    <div class="layui-form-item" style="text-align: center">
+    	<p class="submit" style="display:inline-block;height:38px;line-height:38px;padding:0 18px;background-color:#009688;color:#fff;white-space:nowrap;text-align:center;border:none;border-radius:2px;cursor:pointer;">立即提交</p>
+    	<button class="layui-btn" lay-submit="" lay-filter="goback">返回列表</button>
+    </div>
+</form>
+<script>
+	layui.config({
+	    base: '/static/admin/plugins/layui/modules/'
+	});
+    layui.use(['form', 'layedit', 'laydate'], function() {
+        var form = layui.form();
+        var $ = layui.jquery,
+        laypage = layui.laypage,
+        layer = parent.layer === undefined ? layui.layer : parent.layer;
+        //监听返回事件
+        form.on('submit(goback)', function() {
+        	location.href = "/group/index";
+            return false;
+        });
+      //监听提交
+        $(".submit").click(function () {
+			var item       = [];
+            var item_ids   = [];
+            var group_id   = $('input[name=group_id]').val();
+        	var group_name = $('input[name=group_name]').val();
+        	var item       = $('input[type=checkbox]');
+        	for(i=0;i<item.length;i++)
+        	{
+        		 if(item[i].checked==true)
+        		 {
+        			 item_ids.push(item[i].value);
+        		 }
+        	}
+            if(group_name == "") {
+                tips('小组名不得为空');return false;
+            }
+
+            /*$.post("/Group/savegroup",{"group_name":group_name,"item_id":item_ids,"group_id":group_id},function(data){
+                alert(data);
+                //验证成功
+
+            },'json');*/
+
+
+            $.ajax({
+                type: "post",
+                url: "/Group/saveGroup",
+                data: {"group_name":group_name,"item_id":item_ids,"group_id":group_id},
+                dataType: 'json',
+                success: function(data){
+                    if(data.status == true){
+                    	location.href = "/group/index";
+                    }else if(data.status == false) {
+                        tips(data.msg);
+                    }
+                },
+                error : function (q,w,e) {
+                    tips(e);
+                }
+            })
+		});
+		function tips(msg) {
+	    	layer.open({
+	        	itle: '提示信息',
+	        	content: msg
+	   		});
+	   }
+    });
+</script>
